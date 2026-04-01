@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>杭州挖野菜指南</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: "PingFang SC", "Microsoft YaHei", sans-serif; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        header { text-align: center; padding: 40px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; color: white; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        header h1 { font-size: 2.5em; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        header p { font-size: 1.2em; opacity: 0.9; }
+        .season-nav { display: flex; justify-content: center; gap: 15px; margin-bottom: 30px; flex-wrap: wrap; }
+        .season-btn { padding: 12px 30px; border: none; border-radius: 25px; font-size: 1.1em; cursor: pointer; transition: all 0.3s ease; font-weight: bold; }
+        .season-btn.spring { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #2d5f4c; }
+        .season-btn.summer { background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); color: #8b4513; }
+        .season-btn.autumn { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); color: #8b4513; }
+        .season-btn.winter { background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%); color: #4a5568; }
+        .season-btn:hover, .season-btn.active { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .season-content { display: none; animation: fadeIn 0.5s ease; }
+        .season-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .vegetable-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 25px; margin-bottom: 40px; }
+        .vegetable-card { background: white; border-radius: 15px; padding: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); transition: transform 0.3s ease; }
+        .vegetable-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
+        .vegetable-image { font-size: 4em; text-align: center; margin-bottom: 15px; }
+        .vegetable-info h3 { color: #2d3748; margin-bottom: 15px; font-size: 1.5em; border-bottom: 2px solid #667eea; padding-bottom: 8px; }
+        .vegetable-info p { color: #4a5568; line-height: 1.8; margin-bottom: 10px; }
+        .tags { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
+        .tag { padding: 5px 12px; border-radius: 15px; font-size: 0.85em; font-weight: bold; }
+        .tag.edible { background: #c6f6d5; color: #22543d; }
+        .tag.location { background: #bee3f8; color: #2c5282; }
+        .tag.time { background: #feebc8; color: #7c2d12; }
+        .recipe-section { margin-top: 20px; padding-top: 20px; border-top: 2px dashed #e2e8f0; }
+        .recipe-toggle { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; font-size: 0.95em; font-weight: bold; transition: all 0.3s ease; width: 100%; margin-bottom: 15px; }
+        .recipe-toggle:hover { transform: scale(1.02); box-shadow: 0 3px 10px rgba(102, 126, 234, 0.4); }
+        .recipe-content { display: none; background: #f7fafc; border-radius: 10px; padding: 20px; margin-top: 15px; }
+        .recipe-content.show { display: block; animation: slideDown 0.3s ease; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .recipe-item { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #e2e8f0; }
+        .recipe-item:last-child { border-bottom: none; }
+        .recipe-item h4 { color: #5a67d8; margin-bottom: 10px; font-size: 1.1em; display: flex; align-items: center; gap: 8px; }
+        .recipe-item h4:before { content: "🍳"; }
+        .ingredients-list, .steps-list { list-style: none; padding-left: 0; }
+        .ingredients-list li { padding: 5px 0; padding-left: 20px; position: relative; color: #4a5568; }
+        .ingredients-list li:before { content: "•"; color: #667eea; font-weight: bold; position: absolute; left: 0; }
+        .steps-list { counter-reset: step-counter; }
+        .steps-list li { padding: 10px 0; padding-left: 35px; position: relative; color: #4a5568; line-height: 1.6; }
+        .steps-list li:before { counter-increment: step-counter; content: counter(step-counter); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85em; font-weight: bold; position: absolute; left: 0; top: 8px; }
+        .tips-box { background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%); border-left: 4px solid #fc8181; padding: 12px 15px; border-radius: 5px; margin-top: 10px; font-size: 0.9em; color: #742a2a; }
+        .tips-box:before { content: "💡 小贴士："; font-weight: bold; display: block; margin-bottom: 5px; }
+        .tips-section { background: white; border-radius: 20px; padding: 30px; margin-top: 40px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        .tips-section h2 { color: #2d3748; margin-bottom: 25px; text-align: center; font-size: 1.8em; }
+        .tips-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        .tip-card { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 20px; border-radius: 10px; }
+        .tip-card.warning { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: #2d3748; }
+        .tip-card.safe { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); }
+        .tip-card h3 { margin-bottom: 10px; font-size: 1.3em; }
+        .tip-card ul { list-style: none; padding-left: 0; }
+        .tip-card li { padding: 5px 0; position: relative; padding-left: 20px; }
+        .tip-card li:before { content: "✓"; position: absolute; left: 0; font-weight: bold; }
+        footer { text-align: center; padding: 30px; color: #4a5568; margin-top: 40px; }
+        @media (max-width: 768px) { header h1 { font-size: 1.8em; } .vegetable-grid { grid-template-columns: 1fr; } .season-nav { flex-direction: column; align-items: center; } .season-btn { width: 100%; max-width: 300px; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌿 杭州挖野菜指南</h1>
+            <p>探索杭州四季野菜，品味自然鲜美</p>
+        </header>
+
+        <nav class="season-nav">
+            <button class="season-btn spring active" onclick="showSeason('spring')">🌸 春季 (3-5 月)</button>
+            <button class="season-btn summer" onclick="showSeason('summer')">☀️ 夏季 (6-8 月)</button>
+            <button class="season-btn autumn" onclick="showSeason('autumn')">🍂 秋季 (9-11 月)</button>
+            <button class="season-btn winter" onclick="showSeason('winter')">❄️ 冬季 (12-2 月)</button>
+        </nav>
+
+        <!-- 春季 -->
+        <div id="spring" class="season-content active">
+            <div class="vegetable-grid">
+                <div class="vegetable-card">
+                    <div class="vegetable-image">🎋</div>
+                    <div class="vegetable-info">
+                        <h3>春笋</h3>
+                        <p><strong>最佳采摘期：</strong>3 月中旬 -4 月下旬</p>
+                        <p><strong>特征：</strong>竹笋破土而出，嫩黄色，外层有褐色笋壳包裹。选择矮胖型、手感沉重的为佳。</p>
+                        <p><strong>食用方法：</strong>油焖笋、腌笃鲜、笋干烧肉、凉拌笋丝</p>
+                        <p><strong>推荐地点：</strong>余杭径山、临安天目山、富阳龙门古镇周边竹林</p>
+                        <div class="tags"><span class="tag edible">可食用</span><span class="tag location">竹林</span><span class="tag time">3-4 月</span></div>
+                        <button class="recipe-toggle" onclick="toggleRecipe(this)">📖 查看详细食谱</button>
+                        <div class="recipe-content">
+                            <div class="recipe-item">
+                                <h4>油焖笋</h4>
+                                <ul class="ingredients-list"><li>春笋 500g</li><li>生抽 2 勺</li><li>老抽 1 勺</li><li>冰糖 15g</li><li>食用油适量</li><li>葱花少许</li></ul>
+                                <ol class="steps-list"><li>春笋去壳洗净，切成滚刀块</li><li>锅中加水烧开，放入笋块焯水 5 分钟，捞出沥干</li><li>热锅凉油，放入冰糖炒出糖色</li><li>倒入笋块翻炒均匀，加入生抽、老抽</li><li>加少量水，盖盖焖煮 10 分钟</li><li>大火收汁，撒葱花即可出锅</li></ol>
+                                <div class="tips-box">焯水可以去除笋的涩味，冰糖不要炒焦否则会有苦味</div>
+                            </div>
+                            <div class="recipe-item">
+                                <h4>腌笃鲜（江南名菜）</h4>
+                                <ul class="ingredients-list"><li>春笋 300g</li><li>咸肉 200g</li><li>鲜肉（五花肉）300g</li><li>百叶结 100g</li><li>姜片 3 片</li><li>料酒 1 勺</li></ul>
+                                <ol class="steps-list"><li>春笋去皮切块，焯水 5 分钟备用</li><li>咸肉、鲜肉分别切块，冷水下锅焯水去腥</li><li>砂锅中放入咸肉、鲜肉、姜片、料酒，加足量清水</li><li>大火烧开转小火炖 1 小时</li><li>加入春笋和百叶结，继续炖 30 分钟</li><li>尝味道后决定是否加盐（咸肉已有咸味）</li></ol>
+                                <div class="tips-box">这道菜的关键是"笃"，即小火慢炖，让汤汁浓郁鲜美</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="vegetable-card">
+                    <div class="vegetable-image">🌿</div>
+                    <div class="vegetable-info">
+                        <h3>蕨菜</h3>
+                        <p><strong>最佳采摘期：</strong>3 月下旬 -5 月上旬</p>
+                        <p><strong>特征：</strong>嫩芽卷曲如拳头，紫红色或绿色，茎秆细长。选择未展开的嫩芽，长度 10-20cm 为宜。</p>
+                        <p><strong>食用方法：</strong>蕨菜炒肉、凉拌蕨菜、蕨菜炖汤（需先焯水去涩）</p>
+                        <p><strong>推荐地点：</strong>西湖山区、桐庐瑶琳镇、建德大慈岩周边山坡</p>
+                        <div class="tags"><span class="tag edible">可食用</span><span class="tag location">山坡林地</span><span class="tag time">3-5 月</span></div>
+                        <button class="recipe-toggle" onclick="toggleRecipe(this)">📖 查看详细食谱</button>
+                        <div class="recipe-content">
+                            <div class="recipe-item">
+                                <h4>蕨菜炒腊肉</h4>
+                                <ul class="ingredients-list"><li>新鲜蕨菜 400g</li><li>腊肉 200g</li><li>蒜末 2 瓣</li><li>干辣椒 3 个</li><li>生抽 1 勺</li><li>食用油适量</li></ul>
+                                <ol class="steps-list"><li>蕨菜摘洗干净，沸水中焯烫 3-5 分钟，捞出过凉水，切段</li><li>腊肉切片，蒸熟或煮熟后切片（减少咸味）</li><li>热锅少油，放入腊肉煸炒出油</li><li>加入蒜末、干辣椒爆香</li><li>倒入蕨菜大火翻炒 2 分钟</li><li>加生抽调味，翻炒均匀即可</li></ol>
+                                <div class="tips-box">蕨菜必须焯水去除原蕨苷等有害物质，腊肉本身有咸味，慎加盐</div>
+                            </div>
+                            <div class="recipe-item">
+                                <h4>凉拌蕨菜</h4>
+                                <ul class="ingredients-list"><li>新鲜蕨菜 500g</li><li>蒜末 3 瓣</li><li>香醋 2 勺</li><li>生抽 1 勺</li><li>香油 1 勺</li><li>白糖 少许</li><li>白芝麻 适量</li></ul>
+                                <ol class="steps-list"><li>蕨菜处理干净，沸水焯烫 5 分钟</li><li>捞出过冰水，保持脆嫩口感，沥干切段</li><li>调制料汁：蒜末 + 香醋 + 生抽 + 香油 + 白糖拌匀</li><li>将料汁淋在蕨菜上</li><li>撒上白芝麻，拌匀即可</li></ol>
+                                <div class="tips-box">过冰水能让蕨菜更脆爽，夏天吃特别开胃</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="vegetable-card">
+                    <div class="vegetable-image">🥬</div>
+                    <div class="vegetable-info">
+                        <h3>马兰头</h3>
+                        <p><strong>最佳采摘期：</strong>3 月 -4 月</p>
+                        <p><strong>特征：</strong>叶片椭圆形，边缘有锯齿，茎部紫红色，有特殊清香。选择嫩尖部分。</p>
+                        <p><strong>食用方法：</strong>马兰头拌香干、清炒马兰头、马兰头饺子馅</p>
+                        <p><strong>推荐地点：</strong>杭州郊区田埂、余杭良渚古城遗址公园周边、萧山湘湖附近</p>
+                        <div class="tags"><span class="tag edible">可食用</span><span class="tag location">田野路边</span><span class="tag time">3-4 月</span></div>
+                        <button class="recipe-toggle" onclick="toggleRecipe(this)">📖 查看详细食谱</button>
+                        <div class="recipe-content">
+                            <div class="recipe-item">
+                                <h4>马兰头拌香干（经典凉菜）</h4>
+                                <ul class="ingredients-list"><li>新鲜马兰头 400g</li><li>香干 3 块</li><li>蒜末 2 瓣</li><li>盐 适量</li><li>香油 2 勺</li><li>白糖 少许</li></ul>
+                                <ol class="steps-list"><li>马兰头摘去老根黄叶，洗净</li><li>锅中水开加少许盐和油，放入马兰头焯烫 30 秒</li><li>立即捞出过凉水，挤干水分，切碎</li><li>香干切小丁，也焯水一下</li><li>将马兰头和香干混合，加入蒜末</li><li>调入盐、白糖、香油，拌匀装盘</li></ol>
+                                <div class="tips-box">焯水时间要短，保持翠绿色泽；挤干水分很重要，不然会影响口感</div>
+                            </div>
+                            <div class="recipe-item">
+                                <h4>马兰头猪肉饺子</h4>
+                                <ul class="ingredients-list"><li>马兰头 300g</li><li>猪肉馅 400g</li><li>饺子皮 适量</li><li>姜末 1 勺</li><li>生抽 2 勺</li><li>盐、胡椒粉 适量</li><li>香油 1 勺</li></ul>
+                                <ol class="steps-list"><li>马兰头焯水后挤干，切碎</li><li>猪肉馅加入姜末、生抽、盐、胡椒粉、香油，顺一个方向搅拌上劲</li><li>加入马兰头碎，拌匀成馅料</li><li>包饺子：取饺子皮放馅，对折捏紧边缘</li><li>锅中水开下饺子，煮沸后点两次冷水</li><li>饺子浮起即可捞出，配醋或辣椒油食用</li></ol>
+                                <div class="tips-box">马兰头的清香能解肉腻，春天吃这道饺子特别应季</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="vegetable-card">
+                    <div class="vegetable-image">🌱</div>
+                    <div class="vegetable-info">
+                        <h3>荠菜</h3>
+                        <p><strong>最佳采摘期：</strong>3 月 -4 月</p>
+                        <p><strong>特征：</strong>叶片羽状分裂，贴地生长，开小白花。早春最嫩，开花前采摘最佳。</p>
+                        <p><strong>食用方法：</strong>荠菜馄饨、荠菜豆腐羹、荠菜春卷、凉拌荠菜</p>
+                        <p><strong>推荐地点：</strong>杭州各郊区县农田边、临安东天目山景区周边、淳安千岛湖镇附近</p>
+                        <div class="tags"><span class="tag edible">可食用</span><span class="tag location">田野荒地</span><span class="tag time">3-4 月</span></div>
+                        <button class="recipe-toggle" onclick="toggleRecipe(this)">📖 查看详细食谱</button>
+                        <div class="recipe-content">
+                            <div class="recipe-item">
+                                <h4>荠菜鲜肉馄饨</h4>
+                                <ul class="ingredients-list"><li>新鲜荠菜 500g</li><li>猪肉馅 300g</li><li>馄饨皮 适量</li><li>姜末 1 勺</li><li>生抽 1 勺</li><li>盐、白胡椒粉 适量</li><li>香油 1 勺</li><li>鸡蛋清 1 个</li></ul>
+                                <ol class="steps-list"><li>荠菜洗净，沸水焯烫 30 秒，过凉挤干，切碎</li><li>肉馅中加入姜末、生抽、盐、白胡椒粉、蛋清，搅拌均匀</li><li>加入荠菜碎和香油，拌匀成馅</li><li>包馄饨：取馄饨皮放馅，对角折叠捏合</li><li>锅中水开下馄饨，煮至浮起</li><li>碗底放紫菜、虾皮、葱花，冲入馄饨汤，盛入馄饨</li></ol>
+                                <div class="tips-box">荠菜焯水时间一定要短，保持鲜嫩口感和营养</div>
+                            </div>
+                            <div class="recipe-item">
+                                <h4>荠菜豆腐羹</h4>
+                                <ul class="ingredients-list"><li>荠菜 200g</li><li>嫩豆腐 1 盒</li><li>香菇 2 朵</li><li>胡萝卜 半根</li><li>淀粉 2 勺</li><li>盐、鸡精 适量</li><li>香油 少许</li></ul>
+                                <ol class="steps-list"><li>荠菜洗净焯水，切碎；豆腐切小丁</li><li>香菇、胡萝卜切小丁</li><li>锅中加水烧开，放入香菇丁、胡萝卜丁煮 3 分钟</li><li>加入豆腐丁，再次煮沸</li><li>淀粉加水调成水淀粉，缓缓倒入勾芡</li><li>放入荠菜碎，加盐、鸡精调味</li><li>滴几滴香油，即可出锅</li></ol>
+                                <div class="tips-box">这道羹清淡爽口，老人小孩都适合，勾芡要薄不要太稠</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="vegetable-card">
+                    <div class="vegetable-image">🧄</div>
+                    <div class="vegetable-info">
+                        <h3>折耳根（鱼腥草）</h3>
+                        <p><strong>最佳采摘期：</strong>3 月 -5 月</p>
+                        <p><strong>特征：</strong>心形叶片，背面紫红色，有浓烈鱼腥味。地下茎白色节状，可食用部分为嫩茎叶。</p>
+                        <p><strong>食用方法：</strong>凉拌折耳根、折耳根炒腊肉、折耳根蘸水（西南风味）</p>
+                        <p><strong>推荐地点：</strong>杭州湿润山谷、临安太湖源景区周边、桐庐富春江沿岸潮湿处</p>
+                        <div class="tags"><span class="tag edible">可食用</span><span class="tag location">湿润山谷</span><span class="tag time">3-5 月</span></div>
+                        <button class="recipe-toggle" onclick="toggleRecipe(this)">📖 查看详细食谱</button>
+                        <div class="recipe-content">
+                            <div class="recipe-item">
+                                <h4>凉拌折耳根（云贵川经典）</h4>
+                                <ul class="ingredients-list"><li>新鲜折耳根 400g</li><li>蒜末 3 瓣</li><li>小米辣 2 个</li><li>香菜 2 根</li><li>生抽 2 勺</li><li>香醋 1 勺</li><li>花椒油 1 勺</li><li>白糖 少许</li><li>盐 适量</li></ul>
+                                <ol class="steps-list"><li>折耳根洗净，去掉老根，掐成 5cm 小段</li><li>用少许盐腌制 10 分钟，杀出水分（可减轻腥味）</li><li>蒜切末，小米辣切圈，香菜切段</li><li>调制料汁：生抽 + 香醋 + 花椒油 + 白糖 + 蒜末 + 小米辣</li><li>将料汁倒入折耳根中，拌匀</li><li>撒上香菜，再拌一下即可</li></ol>
+                                <div class="tips-box">第一次吃可能不习惯鱼腥味，可以用盐先腌一下；配烤肉特别解腻</div>
+                            </div>
+                            <div class="recipe-item">
+                                <h4>折耳根炒腊肉</h4>
+                                <ul class="ingredients-list"><li>折耳根 300g</li><li>腊肉 200g</li><li>蒜片 2 瓣</li><li>干辣椒 3 个</li><li>青蒜苗 1 根</li><li>生抽 1 勺</li></ul>
+                                <ol class="steps-list"><li>折耳根洗净切段；腊肉煮熟切片</li><li>热锅少油，放入腊肉煸炒出油</li><li>加入蒜片、干辣椒爆香</li><li>倒入折耳根大火快炒 2 分钟</li><li>加生抽调味，撒入青蒜苗段</li><li>翻炒均匀即可出锅</li></ol>
+                                <div class="tips-box">这道菜要大火快炒，保持折耳根的脆嫩口感</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="vegetable-card">
+                    <div class="vegetable-image">🌼</div>
+                    <div class="vegetable-info">
+                        <h3>蒲公英</h3>
+                        <p><strong>最佳采摘期：</strong>3 月 -5 月</p>
+                        <p><strong>特征：</strong>叶片长椭圆形，边缘波浪状，开黄色小花，全株有白色乳汁。</p>
+                        <p><strong>食用方法：</strong>蒲公英拌沙拉、蒲公英茶、蒲公英炒鸡蛋、凉拌蒲公英</p>
+                        <p><strong>推荐地点：</strong>杭州城郊草地、余杭仓前街道周边、富阳黄公望森林公园附近</p>
+                        <div class="tags"><span class="tag edible">可食用</span><span class="tag location">草地路边</span><span class="tag time">3-5 月</span></div>
+                        <button class="recipe-toggle" onclick="toggleRecipe(this)">📖 查看详细食谱</button>
+                        <div class="recipe-content">
+                            <div class="recipe-item">
+                                <h4>蒲公英炒鸡蛋</h4>
+                                <ul class="ingredients-list"><li>新鲜蒲公英 300g</li><li>鸡蛋 3 个</li><li>蒜末 1 瓣</li><li>盐 适量</li><li>食用油 适量</li></ul>
+                                <ol class="steps-list"><li>蒲公英洗净，沸水焯烫 1 分钟，过凉挤干，切段</li><li>鸡蛋打散，加少许盐搅匀</li><li>热锅多油，倒入蛋液炒至凝固，盛出备用</li><li>留底油爆香蒜末，放入蒲公英翻炒</li><li>倒入炒好的鸡蛋，加盐调味</li><li>翻炒均匀即可出锅</li></ol>
+                                <div class="tips-box">蒲公英略带苦味，但清热解毒，春天吃很养生</div>
+                            </div>
+                            <div class="recipe-item">
+                                <h4>蒲公英凉拌沙拉</h4>
+                                <ul class="ingredients-list"><li>嫩蒲公英叶 200g</li><li>小番茄 10 个</li><li>黄瓜 半根</li><li>橄榄油 2 勺</li><li>柠檬汁 1 勺</li><li>蜂蜜 1 勺</li><li>盐、黑胡椒 适量</li></ul>
+                                <ol class="steps-list"><li>蒲公英嫩叶洗净，沥干</li><li>小番茄对半切，黄瓜切片</li><li>调制油醋汁：橄榄油 + 柠檬汁 + 蜂蜜 + 盐 + 黑胡椒</li><li>将所有食材混合，淋上油醋汁</li><li>拌匀即可享用</li></ol>
+                                <div class="tips-box">选择嫩的蒲公英叶，苦味较轻；搭配水果更清新</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 夏季 -->
+        <div id="summer" class="season-content">
+            <div class="vegetable-grid">
+                <div class="vegetable-card">
+                    <div class="vegetable-image">🍄</div>
+                    <div class="vegetable-info">
+                        <h3>鸡枞菌</h3>
+                        <p><strong>最佳采摘期：</strong>6 月 -8 月（雨后）</p>
+                        <p><strong>特征：</strong>菌盖伞状，灰褐色，菌柄粗壮，有独特香味。多生长在白蚁巢附近。</p>
+                        <p><strong>食用方法：</strong>鸡枞菌炖汤、爆炒鸡枞、鸡枞油（油炸保存）</p>
+                        <p><strong>推荐地点：</strong>临安天目山自然保护区、桐庐白云源、建德七里扬帆景区周边</p>
+                        <div class="tags"><span class="tag edible">可食用</span><span class="tag location">山林</span><span class="tag time">6-8 月</span></div>
+                        <button class="recipe-toggle" onclick="toggleRecipe(this)">📖 查看详细食谱</button>
+                        <div class="recipe-content">
+                            <div class="recipe-item">
+                                <h4>鸡枞菌炖土鸡</h4>
+                                <ul class="ingredients-list"><li>新鲜鸡枞菌 200g</li><li>土鸡 半只</li><li>姜片 3 片</li><li>枸杞 10 粒</li><li>盐 适量</li><li>料酒 1 勺</li></ul>
+                                <ol class="steps-list"><li>鸡枞菌去根洗净，切片；土鸡切块焯水</li><li>砂锅中放入鸡块、姜片、料酒，加足量清水</li><li>大火烧开转小火炖 1.5 小时</li><li>加入鸡枞菌和枸杞，继续炖 20 分钟</li><li>加盐调味即可</li></ol>
+                                <div class="tips-box">鸡枞菌极其鲜美，不需要加鸡精味精，喝的就是原汁原味</div>
+                            </div>
+                            <div class="recipe-item">
+                                <h4>爆炒鸡枞菌</h4>
+                                <ul class="ingredients-list"><li>鸡枞菌 300g</li><li>青椒 1 个</li><li>红椒 1 个</li><li>蒜片 2 瓣</li><li>生抽 1 勺</li><li>盐 适量</li></ul>
+                                <ol class="steps-list"><li>鸡枞菌洗净撕成条；青红椒切块</li><li>热锅凉油，爆香蒜片</li><li>放入鸡枞菌大火翻炒 2 分钟</li><li>加入青红椒继续翻炒</li><li>加生抽、盐调味，出锅</li></ol>
+                                <div class="tips-box">一定要大火快炒，保持鸡枞菌的鲜嫩口感</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="vegetable-card">
+                    <div class="vegetable-image">🌿</div>
+                    <div class="vegetable-info">
+                        <h3>薄荷</h3>
+                        <p><strong>最佳采摘期：</strong>6 月 -9 月</p>
+                        <p><strong>特征：</strong>叶片卵形，边缘锯齿状，揉搓有清凉香气。茎方形，对生叶。</p>
+                        <p><strong>食用方法：</strong>薄荷拌黄瓜、薄荷茶、薄荷炒鸡蛋、薄荷鱼</p>
+                        <p><strong>推荐地点：</strong>杭州湿润溪边、余杭径山寺附近、富阳渌渚镇溪边</p>
+                        <div class="tags"><span class="tag edible">可食用</span><span class="tag location">溪边湿地</span><span class="tag time">6-9 月</span></div>
+                        <button class="recipe-toggle" onclick="toggleRecipe(this)">📖 查看详细食谱</button>
+                        <div class="recipe-content">
+                            <div class="recipe-item">
+                                <h4>薄荷拌黄瓜</h4>
+                                <ul class="ingredients-list"><li>新鲜薄荷叶 50g</li><li>黄瓜 2 根</li><li>蒜末 2 瓣</li><li>香醋 2 勺</li><li>生抽 1 勺</li><li>白糖 1 勺</li><li>香油 少许</li></ul>
+                                <ol class="steps-list"><li>薄荷叶洗净，摘取嫩叶</li><li>黄瓜拍碎切段</li><li>调制料汁：蒜末 + 香醋 + 生抽 + 白糖 + 香油</li><li>将黄瓜和薄荷混合，淋上料汁</li><li>拌匀即可，冷藏后更爽口</li></ol>
+                                <div class="tips-box">夏天吃这道菜特别清凉解暑，薄荷不要太多以免味道过重</div>
+                            </div>
+                            <div class="recipe-item">
+                                <h4>薄荷柠檬茶</h4>
+                                <ul class="ingredients-list"><li>新鲜薄荷 20g</li><li>柠檬 半个</li><li>蜂蜜 适量</li><li>冰块 适量</li><li>凉开水 500ml</li></ul>
+                                <ol class="steps-list"><li>薄荷叶洗净，轻轻拍打释放香气</li><li>柠檬切片，去籽</li><li>杯中放入薄荷叶和柠檬片</li><li>倒入凉开水，加入蜂蜜搅拌</li><li>加入冰块，即可饮用</li></ol>
+                                <div class="tips-box">夏日消暑神器，比买的饮料健康多了</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="vegetable-card">
+                    <div class="vegetable-image">🥬</div>
+                    <div class="vegetable-info">
+                        <h3>马齿苋</h3>
+                        <p><strong>最佳采摘期：</strong>6 月 -8 月</p>
+                        <p><strong>特征：</strong>叶片肥厚多汁，倒卵形，茎紫红色，贴地生长。全株光滑无毛。</p>
+                        <p><strong>食用方法：</strong>马齿苋凉拌、马齿苋包子、马齿苋炒鸡蛋</p>
+                        <p><strong>推荐地点：</strong>杭州郊区农田、余杭良渚、萧山浦阳镇田间</p>
+                        <div class="tags"><span class="tag edible">可食用</span><span class="tag location">田间地头</span><span class="tag time">6-8 月</span></div>
+                        <button class="recipe-toggle" onclick="toggleRecipe(this)">📖 查看详细食谱</button>
+                        <div class="recipe-content">
+                            <div class="recipe-item">
+                                <h4>凉拌马齿苋</h4>
+                                <ul class="ingredients-list"><li>新鲜马齿苋 500g</li><li>蒜末 3 瓣</li><li>生抽 2 勺</li><li>香醋 1 勺</li><li>辣椒油 1 勺</li><li>白糖 少许</li><li>白芝麻 适量</li></ul>
+                                <ol class="steps-list"><li>马齿苋摘去老根，洗净</li><li>沸水中焯烫 2 分钟，捞出过凉</li><li>挤干水分，切段装盘</li><li>调制料汁：蒜末 + 生抽 + 香醋 + 辣椒油 + 白糖</li><li>淋在马齿苋上，撒白芝麻</li></ol>
+                                <div class="tips-box">马齿苋口感滑嫩，略带酸味，夏天吃很开胃</div>
+                            </div>
+                            <div class="recipe-item">
+                                <h4>马齿苋猪肉包子</h4>
+                                <ul class="ingredients-list"><li>马齿苋 400g</li><li>猪肉馅 300g</li><li>包子皮 适量</li><li>姜末 1 勺</li><li>生抽 2 勺</li><li>盐、胡椒粉 适量</li><li>香油 1 勺</li></ul>
+                                <ol class="steps-list"><li>马齿苋焯水挤干，切碎</li><li>肉馅加姜末、生抽、盐、胡椒粉、香油搅匀</li><li>加入马齿苋碎拌匀</li><li>包包子：取皮放馅，捏褶收口</li><li>冷水上锅，水开后蒸 15 分钟</li><li>关火焖 2 分钟再开盖</li></ol>
+                                <div class="tips-box">马齿苋的酸爽能中和肉的油腻，素馅也很香</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="vegetable-card">
+                    <div class="vegetable-image">🌾</div>
+                    <div class="vegetable-info">
+                        <h3>空心菜（野苋菜）</h3>
+                        <p><strong>最佳采摘期：</strong>6 月 -8 月</p>
+                        <p><strong>特征：</strong>茎中空，叶片长椭圆形，嫩绿色。野生品种叶片较小，茎更细。</p>
+                        <p><strong>食用方法：</strong>蒜蓉空心菜、腐乳空心菜、空心菜梗炒肉</p>
+                        <p><strong>推荐地点：</strong>杭州湿地溪边、余杭仓前湿地、富阳东洲岛湿地</p>
+                        <div class="tags"><span class="tag edible">可食用</span><span class="tag location">湿地溪边</span><span class="tag time">6-8 月</span></div>
+                        <button class="recipe-toggle" onclick="toggleRecipe(this)">📖 查看详细食谱</button>
+                        <div class="recipe-content">
+                            <div class="recipe-item">
+                                <h4>蒜蓉空心菜</h4>
+                                <ul class="ingredients-list"><li>空心菜 500g</li><li>大蒜 5 瓣</li><li>盐 适量</li><li>食用油 适量</li><li>鸡精 少许（可选）</li></ul>
+                                <ol class="steps-list"><li>空心菜洗净，折成小段，梗叶分开</li><li>大蒜切末</li><li>热锅凉油，爆香一半蒜末</li><li>先下菜梗翻炒 30 秒</li><li>再下菜叶，大火快炒</li><li>加盐和剩余蒜末，翻炒均匀出锅</li></ol>
+                                <div class="tips-box">一定要大火快炒，保持脆嫩；蒜末分两次放更香</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 秋季 -->
+        <div id="autumn" class="season-content">
+            <div class="vegetable-grid">
+                <div class="vegetable-card">
+                    <div class="vegetable-image">🍄</div>
+                    <div class="vegetable-info">
+                        <h3>松茸</h3>
+                        <p><strong>最佳采摘期：</strong>9 月 -10 月</p>
+                        <p><strong>特征：</strong>菌盖褐色，菌柄粗壮，有独特浓郁香气。生长于松树林地下。</p>
+                        <p><strong>食用方法：</strong>松茸刺身、松茸炖鸡、黄油煎松茸</p>
+                        <p><strong>推荐地点：</strong>临安天目山松林区、桐庐瑶琳松林、建德大慈岩周边</p>
+                        <div class="tags"><span class="tag edible">可食用</span><span class="tag location">松林</span><span class="tag time">9-10 月</span></div>
+                        <button class="recipe-toggle" onclick="toggleRecipe(this)">📖 查看详细食谱</button>
+                        <div class="recipe-content">
+                            <div class="recipe-item">
+                                <h4>松茸土鸡汤</h4>
+                                <ul class="ingredients-list"><li>新鲜松茸 100g</li><li>土鸡 半只</li><li>姜片 3 片</li><li>盐 适量</li><li>枸杞 少许</li></ul>
+                                <ol class="steps-list"><li>松茸用湿布擦净，切片（不要水洗）</li><li>土鸡切块焯水</li><li>砂锅放入鸡块、姜片，加足量水</li><li>大火烧开转小火炖 1.5 小时</li><li>加入松茸片和枸杞，继续炖 15 分钟</li><li>加盐调味即可</li></ol>
+                                <div class="tips-box">松茸不要洗，用湿布擦拭即可，避免香味流失</div>
+                            </div>
+                            <div class="recipe-item">
+                                <h4>黄油煎松茸</h4>
+                                <ul class="ingredients-list"><li>新鲜松茸 150g</li><li>黄油 20g</li><li>盐 少许</li><li>黑胡椒 少许</li></ul>
+                                <ol class="steps-list"><li>松茸擦净，切成 3mm 厚片</li><li>平底锅放入黄油融化</li><li>放入松茸片，中小火煎</li><li>每面煎 2-3 分钟至微黄</li><li>撒盐和黑胡椒，出锅</li></ol>
+                                <div class="tips-box">最简单做法最能体现松茸的鲜美，配米饭绝佳</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="vegetable-card">
+                    <div class="vegetable-image">🌰</div>
+                    <div class="vegetable-info">
+                        <h3>野板栗</h3>
+                        <p><strong>最佳采摘期：</strong>9 月 -10 月</p>
+                        <p><strong>特征：</strong>外壳带刺球状，成熟后裂开露出棕色坚果。选择饱满沉甸甸的。</p>
+                        <p><strong>食用方法：</strong>糖炒栗子、板栗烧鸡、板栗炖排骨</p>
+                        <p><strong>推荐地点：</strong>临安天目山板栗林、余杭鸬鸟镇、淳安枫树岭镇</p>
+                        <div class="tags"><span class="tag edible">可食用</span><span class="tag location">板栗林</span><span class="tag time">9-10 月</span></div>
+                        <button class="recipe-toggle" onclick="toggleRecipe(this)">📖 查看详细食谱</button>
+                        <div class="recipe-content">
+                            <div class="recipe-item">
+                                <h4>板栗红烧肉</h4>
+                                <ul class="ingredients-list"><li>野板栗 300g</li><li>五花肉 500g</li><li>冰糖 20g</li><li>生抽 2 勺</li><li>老抽 1 勺</li><li>姜片 3 片</li><li>八角 1 个</li><li>料酒 1 勺</li></ul>
+                                <ol class="steps-list"><li>板栗去壳去皮（可用热水浸泡后剥）</li><li>五花肉切块，冷水焯水</li><li>热锅少油，放入冰糖炒糖色</li><li>倒入肉块翻炒上色</li><li>加入生抽、老抽、姜片、八角、料酒</li><li>加热水没过肉，大火烧开转小火炖 40 分钟</li><li>加入板栗，继续炖 20 分钟</li><li>大火收汁即可</li></ol>
+                                <div class="tips-box">板栗软糯香甜，吸收了肉汁特别美味</div>
+                            </div>
+                            <div class="recipe-item">
+                                <h4>糖炒栗子（家常版）</h4>
+                                <ul class="ingredients-list"><li>野板栗 500g</li><li>白糖 2 勺</li><li>食用油 1 勺</li><li>水 适量</li></ul>
+                                <ol class="steps-list"><li>板栗洗净，用刀在背面划十字口</li><li>锅中放水，放入板栗煮 10 分钟</li><li>捞出沥干</li><li>平底锅刷油，放入板栗</li><li>中小火翻炒，加入糖水（糖 + 水调匀）</li><li>不断翻炒至汤汁收干，栗子开口</li></ol>
+                                <div class="tips-box">划口是为了方便剥壳和入味，炒的时候不停翻动防止焦</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="vegetable-card">
+                    <div class="vegetable-image">🍇</div>
+                    <div class="vegetable-info">
+                        <h3>野葡萄</h3>
+                        <p><strong>最佳采摘期：</strong>9 月 -10 月</p>
+                        <p><strong>特征：</strong>果实小而圆，紫黑色或绿色，成串生长。味道酸甜。</p>
+                        <p><strong>食用方法：</strong>直接食用、酿葡萄酒、做果酱</p>
+                        <p><strong>推荐地点：</strong>杭州山区藤蔓处、临安太湖源、桐庐白云源</p>
+                        <div class="tags"><span class="tag edible">可食用</span><span class="tag location">山林藤蔓</span><span class="tag time">9-10 月</span></div>
+                        <button class="recipe-toggle" onclick="toggleRecipe(this)">📖 查看详细食谱</button>
+                        <div class="recipe-content">
+                            <div class="recipe-item">
+                                <h4>自制葡萄酒</h4>
+                                <ul class="ingredients-list"><li>野葡萄 1000g</li><li>冰糖 200g</li><li>玻璃罐 1 个（消毒）</li></ul>
+                                <ol class="steps-list"><li>葡萄洗净，晾干水分</li><li>戴上手套将葡萄捏破（不要去皮）</li><li>放入消毒过的玻璃罐中</li><li>加入冰糖，搅拌均匀</li><li>盖上盖子（不要完全密封），放置阴凉处</li><li>每天搅拌一次，发酵 7-10 天</li><li>过滤掉葡萄皮渣，装瓶继续发酵 1 个月</li></ol>
+                                <div class="tips-box">全程不能沾油和水，否则容易变质；野葡萄酿酒风味独特</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="vegetable-card">
+                    <div class="vegetable-image">🌼</div>
+                    <div class="vegetable-info">
+                        <h3>野菊花</h3>
+                        <p><strong>最佳采摘期：</strong>10 月 -11 月</p>
+                        <p><strong>特征：</strong>黄色小花，花瓣细长，有特殊清香。选择未完全开放的花蕾。</p>
+                        <p><strong>食用方法：</strong>菊花茶、菊花糕、菊花火锅、凉拌菊花</p>
+                        <p><strong>推荐地点：</strong>杭州满觉陇、余杭径山寺周边、桐庐芦茨村山区</p>
+                        <div class="tags"><span class="tag edible">可食用</span><span class="tag location">山坡路边</span><span class="tag time">10-11 月</span></div>
+                        <button class="recipe-toggle" onclick="toggleRecipe(this)">📖 查看详细食谱</button>
+                        <div class="recipe-content">
+                            <div class="recipe-item">
+                                <h4>菊花枸杞茶</h4>
+                                <ul class="ingredients-list"><li>新鲜野菊花 10 朵（或干菊花 5g）</li><li>枸杞 10 粒</li><li>冰糖 适量</li><li>开水 500ml</li></ul>
+                                <ol class="steps-list"><li>野菊花洗净，摘去杂质</li><li>将菊花和枸杞放入茶壶</li><li>冲入开水，加盖焖 5 分钟</li><li>加入冰糖调味</li><li>可反复冲泡 2-3 次</li></ol>
+                                <div class="tips-box">秋天干燥，喝菊花茶清热明目，但不要天天喝，体质虚寒者少饮</div>
+                            </div>
+                            <div class="recipe-item">
+                                <h4>菊花糕</h4>
+                                <ul class="ingredients-list"><li>新鲜菊花 20 朵</li><li>糯米粉 200g</li><li>粘米粉 100g</li><li>白糖 80g</li><li>清水 适量</li></ul>
+                                <ol class="steps-list"><li>菊花洗净，用盐水浸泡 10 分钟</li><li>糯米粉和粘米粉混合，加入白糖</li><li>慢慢加水搅拌成糊状</li><li>加入菊花瓣拌匀</li><li>模具刷油，倒入米糊</li><li>上锅蒸 20 分钟</li><li>冷却后脱模切块</li></ol>
+                                <div class="tips-box">菊花糕清香软糯，是秋天的应季点心</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 冬季 -->
+        <div id="winter" class="season-content">
+            <div class="vegetable-grid">
+                <div class="vegetable-card">
+                    <div class="vegetable-image">🎋</div>
+                    <div class="vegetable-info">
+                        <h3>冬笋</h3>
+                        <p><strong>最佳采摘期：</strong>12 月 - 次年 2 月</p>
+                        <p><strong>特征：</strong>尚未出土的竹笋，埋于地下，需凭经验寻找。肉质细嫩，味道鲜美。</p>
+                        <p><strong>食用方法：</strong>冬笋老鸭煲、雪菜冬笋、冬笋红烧肉、清炒冬笋</p>
+                        <p><strong>推荐地点：</strong>余杭径山竹林、临安天目山竹海、富阳龙门古镇周边</p>
+                        <div class="tags"><span class="tag edible">可食用</span><span class="tag location">竹林</span><span class="tag time">12-2 月</span></div>
+                        <button class="recipe-toggle" onclick="toggleRecipe(this)">📖 查看详细食谱</button>
+                        <div class="recipe-content">
+                            <div class="recipe-item">
+                                <h4>冬笋老鸭煲</h4>
+                                <ul class="ingredients-list"><li>冬笋 300g</li><li>老鸭 半只</li><li>火腿 50g</li><li>姜片 3 片</li><li>料酒 1 勺</li><li>盐 适量</li><li>枸杞 少许</li></ul>
+                                <ol class="steps-list"><li>冬笋去壳切片，焯水备用</li><li>老鸭切块，冷水焯水去腥</li><li>砂锅放入鸭块、火腿、姜片、料酒</li><li>加足量清水，大火烧开转小火炖 2 小时</li><li>加入冬笋片，继续炖 30 分钟</li><li>加盐、枸杞调味即可</li></ol>
+                                <div class="tips-box">冬天进补佳品，鸭肉酥烂，汤汁鲜美</div>
+                            </div>
+                            <div class="recipe-item">
+                                <h4>雪菜冬笋</h4>
+                                <ul class="ingredients-list"><li>冬笋 400g</li><li>雪里蕻（雪菜）150g</li><li>干辣椒 2 个</li><li>蒜末 1 瓣</li><li>白糖 少许</li><li>食用油 适量</li></ul>
+                                <ol class="steps-list"><li>冬笋去皮切片，焯水 5 分钟</li><li>雪菜洗净切碎，挤干水分</li><li>热锅凉油，爆香蒜末和干辣椒</li><li>放入雪菜翻炒出香味</li><li>加入冬笋片翻炒</li><li>加少许白糖提鲜（雪菜有咸味，一般不加盐）</li></ol>
+                                <div class="tips-box">雪菜的咸香配上冬笋的鲜嫩，超级下饭</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="vegetable-card">
+                    <div class="vegetable-image">🥬</div>
+                    <div class="vegetable-info">
+                        <h3>雪里蕻</h3>
+                        <p><strong>最佳采摘期：</strong>12 月 - 次年 2 月</p>
+                        <p><strong>特征：</strong>叶片深绿色，边缘波浪状，耐寒性强。霜打后更甜。</p>
+                        <p><strong>食用方法：</strong>雪菜肉丝、雪菜豆瓣汤、雪菜炒年糕、腌制雪里蕻</p>
+                        <p><strong>推荐地点：</strong>杭州郊区农田、余杭良渚、萧山浦阳镇周边</p>
+                        <div class="tags"><span class="tag edible">可食用</span><span class="tag location">农田</span><span class="tag time">12-2 月</span></div>
+                        <button class="recipe-toggle" onclick="toggleRecipe(this)">📖 查看详细食谱</button>
+                        <div class="recipe-content">
+                            <div class="recipe-item">
+                                <h4>雪菜肉丝面</h4>
+                                <ul class="ingredients-list"><li>雪里蕻 200g</li><li>猪里脊 150g</li><li>面条 适量</li><li>姜丝 少许</li><li>生抽 1 勺</li><li>淀粉 1 勺</li><li>盐 适量</li></ul>
+                                <ol class="steps-list"><li>雪菜洗净切碎；里脊切丝，用生抽和淀粉腌制</li><li>热锅凉油，滑炒肉丝至变色盛出</li><li>留底油，放入雪菜翻炒</li><li>加入肉丝一起翻炒</li><li>另起锅煮面，煮熟捞出</li><li>碗底放少许生抽，冲入面汤，放入面条，浇上雪菜肉丝</li></ol>
+                                <div class="tips-box">杭州人最爱的早餐之一，雪菜要炒出香味才好吃</div>
+                            </div>
+                            <div class="recipe-item">
+                                <h4>雪菜炒年糕</h4>
+                                <ul class="ingredients-list"><li>雪里蕻 150g</li><li>宁波年糕 300g</li><li>猪肉丝 100g</li><li>冬笋 100g</li><li>生抽 1 勺</li><li>糖 少许</li></ul>
+                                <ol class="steps-list"><li>年糕切片，用水泡软</li><li>雪菜切碎；冬笋切片焯水</li><li>热锅凉油，炒香肉丝</li><li>加入雪菜、冬笋翻炒</li><li>放入年糕片，加少量水焖 2 分钟</li><li>加生抽、糖调味，翻炒均匀</li></ol>
+                                <div class="tips-box">这是经典的江南家常菜，年糕软糯，雪菜鲜香</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="vegetable-card">
+                    <div class="vegetable-image">🌿</div>
+                    <div class="vegetable-info">
+                        <h3>野蒜（薤白）</h3>
+                        <p><strong>最佳采摘期：</strong>1 月 -3 月</p>
+                        <p><strong>特征：</strong>叶片细长如韭菜，地下鳞茎白色，有浓烈蒜香。冬季至早春最佳。</p>
+                        <p><strong>食用方法：</strong>野蒜炒鸡蛋、野蒜拌豆腐、野蒜包饺子、腌制野蒜</p>
+                        <p><strong>推荐地点：</strong>杭州山坡草地、临安昌化镇周边、桐庐横村镇山区</p>
+                        <div class="tags"><span class="tag edible">可食用</span><span class="tag location">山坡草地</span><span class="tag time">1-3 月</span></div>
+                        <button class="recipe-toggle" onclick="toggleRecipe(this)">📖 查看详细食谱</button>
+                        <div class="recipe-content">
+                            <div class="recipe-item">
+                                <h4>野蒜炒鸡蛋</h4>
+                                <ul class="ingredients-list"><li>野蒜 200g</li><li>鸡蛋 4 个</li><li>盐 适量</li><li>食用油 适量</li></ul>
+                                <ol class="steps-list"><li>野蒜洗净，切段（白色和绿色分开）</li><li>鸡蛋打散，加盐搅匀</li><li>热锅多油，倒入蛋液炒至凝固盛出</li><li>留底油，先炒野蒜白色部分</li><li>再放入绿色部分和鸡蛋</li><li>加盐调味，翻炒均匀</li></ol>
+                                <div class="tips-box">野蒜的蒜香和鸡蛋特别搭，简单却美味</div>
+                            </div>
+                            <div class="recipe-item">
+                                <h4>腌野蒜</h4>
+                                <ul class="ingredients-list"><li>野蒜 500g</li><li>盐 50g</li><li>白糖 30g</li><li>白醋 100ml</li><li>凉开水 适量</li></ul>
+                                <ol class="steps-list"><li>野蒜洗净，去掉老叶</li><li>用盐腌制 2 小时，杀出水分</li><li>挤出水分，装入消毒过的玻璃罐</li><li>白糖 + 白醋 + 凉开水调成腌汁</li><li>倒入罐中，没过野蒜</li><li>密封冷藏，3 天后即可食用</li></ol>
+                                <div class="tips-box">腌好的野蒜脆爽开胃，配粥吃特别好</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="vegetable-card">
+                    <div class="vegetable-image">🍄</div>
+                    <div class="vegetable-info">
+                        <h3>冬菇</h3>
+                        <p><strong>最佳采摘期：</strong>12 月 - 次年 2 月</p>
+                        <p><strong>特征：</strong>菌盖厚实，颜色深褐，生长于枯木上。冬季低温生长缓慢，肉质紧实。</p>
+                        <p><strong>食用方法：</strong>香菇炖鸡、蚝油香菇、香菇青菜、香菇滑鸡</p>
+                        <p><strong>推荐地点：</strong>临安天目山林区、桐庐白云源、建德大慈岩周边阔叶林</p>
+                        <div class="tags"><span class="tag edible">可食用</span><span class="tag location">阔叶林</span><span class="tag time">12-2 月</span></div>
+                        <button class="recipe-toggle" onclick="toggleRecipe(this)">📖 查看详细食谱</button>
+                        <div class="recipe-content">
+                            <div class="recipe-item">
+                                <h4>香菇炖土鸡</h4>
+                                <ul class="ingredients-list"><li>新鲜冬菇 200g</li><li>土鸡 半只</li><li>姜片 3 片</li><li>红枣 5 颗</li><li>枸杞 10 粒</li><li>盐 适量</li><li>料酒 1 勺</li></ul>
+                                <ol class="steps-list"><li>冬菇去根洗净，大的切开</li><li>土鸡切块焯水</li><li>砂锅放入鸡块、姜片、料酒，加足量水</li><li>大火烧开转小火炖 1 小时</li><li>加入冬菇、红枣，继续炖 30 分钟</li><li>加枸杞和盐，再炖 5 分钟</li></ol>
+                                <div class="tips-box">冬天喝一碗热腾腾的香菇鸡汤，暖身又滋补</div>
+                            </div>
+                            <div class="recipe-item">
+                                <h4>蚝油香菇青菜</h4>
+                                <ul class="ingredients-list"><li>冬菇 150g</li><li>上海青 300g</li><li>蒜末 2 瓣</li><li>蚝油 2 勺</li><li>生抽 1 勺</li><li>淀粉 1 勺</li><li>食用油 适量</li></ul>
+                                <ol class="steps-list"><li>冬菇洗净切片；上海青洗净</li><li>锅中水开，放入青菜焯烫 30 秒，捞出摆盘</li><li>热锅凉油，爆香蒜末</li><li>放入香菇翻炒至变软</li><li>加入蚝油、生抽和少量水</li><li>淀粉加水调匀，倒入勾芡</li><li>淋在青菜上即可</li></ol>
+                                <div class="tips-box">这道菜色泽鲜亮，营养丰富，年夜饭必备</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 注意事项 -->
+        <div class="tips-section">
+            <h2>⚠️ 挖野菜注意事项</h2>
+            <div class="tips-grid">
+                <div class="tip-card safe">
+                    <h3>✅ 安全采摘建议</h3>
+                    <ul>
+                        <li>不认识的不采不食</li>
+                        <li>选择远离污染源的地方</li>
+                        <li>采摘鲜嫩部分，避免老化</li>
+                        <li>适量采摘，保护生态</li>
+                        <li>携带专业图鉴或 APP 辅助识别</li>
+                        <li>多人同行，相互确认</li>
+                    </ul>
+                </div>
+
+                <div class="tip-card warning">
+                    <h3>❌ 危险警示</h3>
+                    <ul>
+                        <li>公路旁、工厂附近的野菜可能受污染</li>
+                        <li>喷洒过农药的农田周边不要采摘</li>
+                        <li>相似品种需谨慎辨别（如毒蘑菇）</li>
+                        <li>部分野菜需焯水去毒素</li>
+                        <li>过敏体质者慎食</li>
+                        <li>儿童、孕妇慎食野生菌类</li>
+                    </ul>
+                </div>
+
+                <div class="tip-card">
+                    <h3>🔪 处理技巧</h3>
+                    <ul>
+                        <li>回家后立即清洗分拣</li>
+                        <li>蕨菜等需沸水焯烫去涩</li>
+                        <li>菌类务必彻底煮熟</li>
+                        <li>首次食用少量尝试</li>
+                        <li>剩余野菜可焯水冷冻保存</li>
+                        <li>出现不适立即就医</li>
+                    </ul>
+                </div>
+
+                <div class="tip-card">
+                    <h3>📍 推荐装备</h3>
+                    <ul>
+                        <li>小铲子或刀具</li>
+                        <li>透气的篮子或布袋</li>
+                        <li>手套（防刺防虫）</li>
+                        <li>登山鞋（防滑）</li>
+                        <li>手机保持电量充足</li>
+                        <li>饮用水和干粮</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>🌿 杭州挖野菜指南 | 尊重自然，安全采摘，享受美味 🌿</p>
+            <p style="margin-top: 10px; font-size: 0.9em;">温馨提示：本指南仅供参考，采摘前请做好充分调研和安全准备</p>
+        </footer>
+    </div>
+
+    <script>
+        function showSeason(seasonName) {
+            document.querySelectorAll('.season-content').forEach(content => { content.classList.remove('active'); });
+            document.querySelectorAll('.season-btn').forEach(btn => { btn.classList.remove('active'); });
+            document.getElementById(seasonName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function toggleRecipe(btn) {
+            const content = btn.nextElementSibling;
+            content.classList.toggle('show');
+            if (content.classList.contains('show')) {
+                btn.textContent = '📕 收起食谱';
+            } else {
+                btn.textContent = '📖 查看详细食谱';
+            }
+        }
+    </script>
+</body>
+</html>
